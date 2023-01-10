@@ -1,0 +1,35 @@
+---
+title: "Coursework"
+author: "Yuqi Gao"
+date: "2023-01-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+#install.packages("expss")
+library(expss)
+
+```
+
+```{r}
+#unzip("owid-covid-data.zip")
+origin <- read.csv("owid-covid-data.csv")
+head(origin)
+```
+
+```{r, warning=FALSE}
+variables <- colnames(origin)
+head(variables)
+labels <- data.frame(matrix(ncol = 1, nrow = 67))
+rownames(labels) <- variables
+colnames(labels) <- c("definition")
+```
+
+```{r}
+
+```
+
