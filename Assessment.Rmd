@@ -12,7 +12,12 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, include=FALSE}
 #install.packages("expss")
 library(expss)
-
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+library(tidyverse)
+library(lubridate)
+library(scales)
 ```
 
 ```{r}
@@ -30,6 +35,145 @@ colnames(labels) <- c("definition")
 ```
 
 ```{r}
+labels <- labels %>% mutate(definition=c("ISO 3166-1 alpha-3 – three-letter country codes. Note that OWID-defined regions (e.g. continents like 'Europe') contain prefix 'OWID_'.",
+                                        "Continent of the geographical location",
+                                        "Geographical location",
+                                        "Date of observation",
+                                        "Total confirmed cases of COVID-19",
+                                        "New confirmed cases of COVID-19",
+                                        "New confirmed cases of COVID-19 (7-day smoothed)",
+                                        "Total deaths attributed to COVID-19",
+                                        "New deaths attributed to COVID-19",
+                                        "New deaths attributed to COVID-19 (7-day smoothed)",
+                                        "Total confirmed cases of COVID-19 per 1,000,000 people",
+                                        "New confirmed cases of COVID-19 per 1,000,000 people",
+                                        "New confirmed cases of COVID-19 (7-day smoothed) per 1,000,000 people",
+                                        "Total deaths attributed to COVID-19 per 1,000,000 people",
+                                        "New deaths attributed to COVID-19 per 1,000,000 people",
+                                        "New deaths attributed to COVID-19 (7-day smoothed) per 1,000,000 people",
+                                        "Real-time estimate of the effective reproduction rate (R) of COVID-19",
+                                        "Number of COVID-19 patients in intensive care units (ICUs) on a given day",
+                                        "Number of COVID-19 patients in intensive care units (ICUs) on a given day per 1,000,000 people",
+                                        "Number of COVID-19 patients in hospital on a given day",
+                                        "Number of COVID-19 patients in hospital on a given day per 1,000,000 people",
+                                        "Number of COVID-19 patients newly admitted to intensive care units (ICUs) in a given week",
+                                        "Number of COVID-19 patients newly admitted to intensive care units (ICUs) in a given week per 1,000,000 people",
+                                        "Number of COVID-19 patients newly admitted to hospitals in a given week",
+                                        "Number of COVID-19 patients newly admitted to hospitals in a given week per 1,000,000 people",
+                                        "Total tests for COVID-19",
+                                        "New tests for COVID-19 (only calculated for consecutive days)",
+                                        "Total tests for COVID-19 per 1,000 people",
+                                        "New tests for COVID-19 per 1,000 people",
+                                        "New tests for COVID-19 (7-day smoothed)",
+                                        "New tests for COVID-19 (7-day smoothed) per 1,000 people",                                        
+                                        "The share of COVID-19 tests that are positive, given as a rolling 7-day average",
+                                        "Tests conducted per new confirmed case of COVID-19, given as a rolling 7-day average",
+                                        "Units used by the location to report its testing data. A country file can't contain mixed units. All metrics concerning testing data use the specified test unit. Valid units are 'people tested' (number of people tested), 'tests performed' (number of tests performed. a single person can be tested more than once in a given day) and 'samples tested' (number of samples tested. In some cases, more than one sample may be required to perform a given test.)",
+                                        "Total number of COVID-19 vaccination doses administered",
+                                        "Total number of people who received at least one vaccine dose",
+                                        "Total number of people who received all doses prescribed by the initial vaccination protocol",
+                                        "Total number of COVID-19 vaccination booster doses administered",
+                                        "New COVID-19 vaccination doses administered",
+                                        "New COVID-19 vaccination doses administered (7-day smoothed)",
+                                        "Total number of COVID-19 vaccination doses administered per 100 people in the total population",
+                                        "Total number of people who received at least one vaccine dose per 100 people in the total population",
+                                        "Total number of people who received all doses prescribed by the initial vaccination protocol per 100 people in the total population",
+                                        "Total number of COVID-19 vaccination booster doses administered per 100 people in the total population",
+                                        "New COVID-19 vaccination doses administered (7-day smoothed) per 1,000,000 people in the total population",
+                                        "Daily number of people receiving their first vaccine dose (7-day smoothed)",
+                                        "Daily number of people receiving their first vaccine dose (7-day smoothed) per 100 people in the total population",
+                                        "Government Response Stringency Index: composite measure based on 9 response indicators including school closures, workplace closures, and travel bans, rescaled to a value from 0 to 100 (100 = strictest response)",
+                                        "Population (latest available values)",
+                                        "Number of people divided by land area, measured in square kilometers, most recent year available",
+                                        "Median age of the population, UN projection for 2020",
+                                        "Share of the population that is 65 years and older, most recent year available",
+                                        "Share of the population that is 70 years and older in 2015",
+                                        "Gross domestic product at purchasing power parity (constant 2011 international dollars), most recent year available",
+                                        "Share of the population living in extreme poverty, most recent year available since 2010",
+                                        "Death rate from cardiovascular disease in 2017 (annual number of deaths per 100,000 people)",
+                                        "Diabetes prevalence (% of population aged 20 to 79) in 2017",
+                                        "Share of women who smoke, most recent year available",
+                                        "Share of men who smoke, most recent year available",
+                                        "Share of the population with basic handwashing facilities on premises, most recent year available",
+                                        "Hospital beds per 1,000 people, most recent year available since 2010",
+                                        "Life expectancy at birth in 2019",
+                                        "A composite index measuring average achievement in three basic dimensions of human development—a long and healthy life, knowledge and a decent standard of living. Values for 2019",
+                                        "Cumulative difference between the reported number of deaths since 1 January 2020 and the projected number of deaths for the same period based on previous years. For more information",
+                                        "Percentage difference between the cumulative number of deaths since 1 January 2020 and the cumulative projected deaths for the same period based on previous years. For more information",
+                                        "Percentage difference between the reported number of weekly or monthly deaths in 2020–2021 and the projected number of deaths for the same period based on previous years. For more information",
+                                        "Cumulative difference between the reported number of deaths since 1 January 2020 and the projected number of deaths for the same period based on previous years, per million people"))
+```
 
+```{r, include=FALSE}
+png("test.png", height=22*nrow(labels), width = 2800*ncol(labels))
+p<-tableGrob(labels)
+grid.arrange(p)
+dev.off()
+
+```
+
+
+```{r}
+USA_data <- origin %>% filter(location=="United States")
+USA_data
+```
+
+```{r}
+USA_data$date <- ymd(USA_data$date)
+USA_data
+```
+```{r}
+USA_data_2 <- USA_data %>% mutate(year=year(date))
+```
+
+
+```{r}
+p1 <- ggplot(USA_data_2)+geom_line(aes(x=date,y=total_deaths),colour="red")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+facet_wrap(~year,scales="free_x")
+p1
+```
+
+```{r}
+p2 <- ggplot(USA_data_2)+geom_line(aes(x=date,y=total_cases),colour="blue")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+facet_wrap(~year,scales="free_x")
+p2
+```
+
+```{r}
+grid.arrange(p1,p2,nrow=2)
+```
+
+```{r}
+popu_avg <- origin %>% group_by(location) %>% summarize(avg = median(population_density, na.rm=TRUE))
+popu_avg <- popu_avg %>% arrange(desc(popu_avg$avg))
+popu_avg <- na.omit(popu_avg)
+popu_avg_1 <- filter(popu_avg,avg>500)
+popu_avg_2 <- filter(popu_avg,avg>200&avg<=500)
+popu_avg_3 <- filter(popu_avg,avg>100&avg<=200)
+popu_avg_4 <- filter(popu_avg,avg>50&avg<=100)
+popu_avg_5 <- filter(popu_avg,avg>20&avg<=50)
+popu_avg_6 <- filter(popu_avg,avg>=0&avg<=20)
+popu_avg_1
+popu_avg_2
+popu_avg_3
+popu_avg_4
+popu_avg_5
+popu_avg_6
+```
+
+```{r}
+ggplot(popu_avg_1,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="red")+theme(axis.text.x=element_text(angle=45, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >500 people/km\u00B2")
+
+ggplot(popu_avg_2,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="orange")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >200 & <= 500 people/km\u00B2")
+
+ggplot(popu_avg_3,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="gold")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >100 & <= 200 people/km\u00B2")
+
+ggplot(popu_avg_4,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="darkgreen")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >50 & <= 100 people/km\u00B2")
+
+ggplot(popu_avg_5,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="darkcyan")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >20 & <= 50 people/km\u00B2")
+
+ggplot(popu_avg_6,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="blue")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >=0 & <= 20 people/km\u00B2")
+```
+
+```{r}
+origin %>% group_by(location) %>% summarise(origin$positive_rate)
 ```
 
