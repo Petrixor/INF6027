@@ -11,6 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r, include=FALSE}
 #install.packages("expss")
+#install.packages("formattable")
+#install.packages("rnaturalearth")
+#install.packages("rnaturalearthdata")
 library(expss)
 library(dplyr)
 library(ggplot2)
@@ -18,6 +21,9 @@ library(gridExtra)
 library(tidyverse)
 library(lubridate)
 library(scales)
+library(formattable)
+library(rnaturalearth)
+library(rnaturalearthdata)
 ```
 
 ```{r}
@@ -142,7 +148,7 @@ grid.arrange(p1,p2,nrow=2)
 ```
 
 ```{r}
-popu_avg <- origin %>% group_by(location) %>% summarize(avg = median(population_density, na.rm=TRUE))
+popu_avg <- origin %>% group_by(location) %>% summarize(avg = unique(population_density, na.rm=TRUE))
 popu_avg <- popu_avg %>% arrange(desc(popu_avg$avg))
 popu_avg <- na.omit(popu_avg)
 popu_avg_1 <- filter(popu_avg,avg>500)
@@ -150,7 +156,7 @@ popu_avg_2 <- filter(popu_avg,avg>200&avg<=500)
 popu_avg_3 <- filter(popu_avg,avg>100&avg<=200)
 popu_avg_4 <- filter(popu_avg,avg>50&avg<=100)
 popu_avg_5 <- filter(popu_avg,avg>20&avg<=50)
-popu_avg_6 <- filter(popu_avg,avg>=0&avg<=20)
+popu_avg_6 <- filter(popu_avg,avg>0&avg<=20)
 popu_avg_1
 popu_avg_2
 popu_avg_3
@@ -158,6 +164,13 @@ popu_avg_4
 popu_avg_5
 popu_avg_6
 ```
+
+```{r}
+poverty_avg <- origin %>% group_by(location) %>% summarize(ex_pov_avg = median(extreme_poverty, na.rm=TRUE))
+poverty_avg <- poverty_avg %>% filter(ex_pov_avg > 0)
+poverty_avg <- poverty_avg %>% arrange(desc(ex_pov_avg))
+```
+
 
 ```{r}
 ggplot(popu_avg_1,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="red")+theme(axis.text.x=element_text(angle=45, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >500 people/km\u00B2")
@@ -170,10 +183,118 @@ ggplot(popu_avg_4,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identit
 
 ggplot(popu_avg_5,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="darkcyan")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >20 & <= 50 people/km\u00B2")
 
-ggplot(popu_avg_6,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="blue")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >=0 & <= 20 people/km\u00B2")
+ggplot(popu_avg_6,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="blue")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >0 & <= 20 people/km\u00B2")
 ```
 
 ```{r}
-origin %>% group_by(location) %>% summarise(origin$positive_rate)
+pr <- origin %>% group_by(location) %>% select(date, positive_rate, extreme_poverty, people_vaccinated, people_fully_vaccinated, population)
+
+origin_na_replace <- replace(origin,is.na(origin),0)
+
+pr <- mutate(pr,  vaccinated_rate = people_vaccinated/population, fully_vaccinated_rate = people_fully_vaccinated/population)
+
+```
+
+```{r}
+pr_vaccinated_filter <- pr %>% filter(vaccinated_rate>0)
+```
+
+```{r}
+pr_vaccinated_filter_valid <- filter(pr_vaccinated_filter, location %in% poverty_avg$location)
+```
+
+```{r}
+pr_vaccinated_filter_valid <- pr_vaccinated_filter_valid %>% mutate(status=case_when(extreme_poverty>30  ~ '8',
+                                                       extreme_poverty<=30 & extreme_poverty >20  ~ '7',
+                                                       extreme_poverty<=20 & extreme_poverty >15  ~ '6',
+                                                       extreme_poverty<=15 & extreme_poverty >10  ~ '5',
+                                                       extreme_poverty<=10 & extreme_poverty >5  ~ '4',
+                                                       extreme_poverty<=5 & extreme_poverty >3  ~ '3',
+                                                       extreme_poverty<=3 & extreme_poverty >1  ~ '2',
+                                                       extreme_poverty<=1 & extreme_poverty >=0  ~ '1'))
+```
+
+```{r}
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+world_modifies <- world %>% mutate(selection = ifelse(admin %in% pr_vaccinated_filter_valid$location, 1, NA))
+```
+
+```{r}
+join_data <- pr_vaccinated_filter_valid %>% select(location, status)
+deduped_join_data <- unique(join_data)
+deduped_join_data <- deduped_join_data %>% rename(name_long = location)
+world_modifies_join = merge(x=world_modifies,y=deduped_join_data,by="name_long",all.x=TRUE)
+```
+
+```{r}
+ggplot(data = world_modifies_join) +
+  geom_sf(aes(fill=status)) +
+  theme_bw()+scale_fill_discrete(name='Extreme Poverty\nStatus (% of population)',
+                                 breaks=c("1", "2", "3", "4", "5", "6", "7", "8"),
+                                 labels=c(">=0% & <=1%", ">1% & <=3%", ">3% & <=5%", ">5% & <=10%", ">10% & <=15%", ">15% & <=20%", ">20% & <=30%", ">30%"))+ggtitle("World Extreme Poverty Status (Filtered Data)")
+```
+
+```{r}
+pr_vaccinated_filter_valid_1 <- pr_vaccinated_filter_valid %>% filter(status == 1) 
+
+random_1 <- pr_vaccinated_filter_valid_1[pr_vaccinated_filter_valid_1$location %in% sample(unique(pr_vaccinated_filter_valid_1$location), 3),]
+```
+
+
+```{r}
+pr_vaccinated_filter_valid_2 <- pr_vaccinated_filter_valid %>% filter(status == 2) 
+
+random_2 <- pr_vaccinated_filter_valid_2[pr_vaccinated_filter_valid_2$location %in% sample(unique(pr_vaccinated_filter_valid_2$location), 3),]
+```
+
+```{r}
+pr_vaccinated_filter_valid_3 <- pr_vaccinated_filter_valid %>% filter(status == 3) 
+
+random_3 <- pr_vaccinated_filter_valid_3[pr_vaccinated_filter_valid_3$location %in% sample(unique(pr_vaccinated_filter_valid_3$location), 3),]
+```
+
+```{r}
+pr_vaccinated_filter_valid_4 <- pr_vaccinated_filter_valid %>% filter(status == 4) 
+
+random_4 <- pr_vaccinated_filter_valid_4[pr_vaccinated_filter_valid_4$location %in% sample(unique(pr_vaccinated_filter_valid_4$location), 3),]
+```
+
+```{r}
+pr_vaccinated_filter_valid_5 <- pr_vaccinated_filter_valid %>% filter(status == 5) 
+
+random_5 <- pr_vaccinated_filter_valid_5[pr_vaccinated_filter_valid_5$location %in% sample(unique(pr_vaccinated_filter_valid_5$location), 3),]
+```
+
+```{r}
+pr_vaccinated_filter_valid_6 <- pr_vaccinated_filter_valid %>% filter(status == 6) 
+
+random_6 <- pr_vaccinated_filter_valid_6[pr_vaccinated_filter_valid_6$location %in% sample(unique(pr_vaccinated_filter_valid_6$location), 3),]
+```
+
+```{r}
+pr_vaccinated_filter_valid_7 <- pr_vaccinated_filter_valid %>% filter(status == 7) 
+
+random_7 <- pr_vaccinated_filter_valid_7[pr_vaccinated_filter_valid_7$location %in% sample(unique(pr_vaccinated_filter_valid_7$location), 3),]
+```
+
+```{r}
+pr_vaccinated_filter_valid_8 <- pr_vaccinated_filter_valid %>% filter(status == 8) 
+
+random_8 <- pr_vaccinated_filter_valid_8[pr_vaccinated_filter_valid_8$location %in% sample(unique(pr_vaccinated_filter_valid_8$location), 3),]
+```
+
+```{r}
+random_list <- list(random_1,random_2,random_3,random_4,random_5,random_6,random_7,random_8)
+random_list <- random_list %>% reduce(full_join, by=NULL)
+```
+
+
+```{r}
+random_list$date <- ymd(random_list$date)
+
+ggplot(random_list)+geom_smooth(aes(x=date,y=vaccinated_rate,colour=status),size=1,level=.99)+scale_y_continuous(breaks = pretty_breaks())+geom_vline(xintercept = as.Date("2022-04-15"),linetype = "dashed", colour ="red",size=1)+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+scale_color_discrete(name='Extreme Poverty\nStatus (% of population)',
+                                 breaks=c("1", "2", "3", "4", "5", "6", "7", "8"),
+                                 labels=c(">=0% & <=1%", ">1% & <=3%", ">3% & <=5%", ">5% & <=10%", ">10% & <=15%", ">15% & <=20%", ">20% & <=30%", ">30%"))+ylab("vaccinated rate (at least one dose)")
 ```
 
