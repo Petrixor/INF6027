@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #install.packages("formattable")
 #install.packages("rnaturalearth")
 #install.packages("rnaturalearthdata")
-library(expss)
+#install.packages("NCmisc")
 library(dplyr)
 library(ggplot2)
 library(gridExtra)
@@ -24,6 +24,7 @@ library(scales)
 library(formattable)
 library(rnaturalearth)
 library(rnaturalearthdata)
+library(NCmisc)
 ```
 
 ```{r}
@@ -120,30 +121,28 @@ dev.off()
 
 
 ```{r}
-USA_data <- origin %>% filter(location=="United States")
-USA_data
+World_data <- origin %>% filter(location=="World")
 ```
 
 ```{r}
-USA_data$date <- ymd(USA_data$date)
-USA_data
+World_data$date <- ymd(World_data$date)
 ```
 ```{r}
-USA_data_2 <- USA_data %>% mutate(year=year(date))
+World_data_2 <- World_data %>% mutate(year=year(date))
 ```
 
 
 ```{r}
-p1 <- ggplot(USA_data_2)+geom_line(aes(x=date,y=total_deaths),colour="red")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+facet_wrap(~year,scales="free_x")
+p1 <- ggplot(World_data_2)+geom_line(aes(x=date,y=total_deaths),colour="red")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+facet_wrap(~year,scales="free_x")+ylab("Total Deaths")
 p1
 ```
 
 ```{r}
-p2 <- ggplot(USA_data_2)+geom_line(aes(x=date,y=total_cases),colour="blue")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+facet_wrap(~year,scales="free_x")
+p2 <- ggplot(World_data_2)+geom_line(aes(x=date,y=total_cases),colour="blue")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+facet_wrap(~year,scales="free_x")+ylab("Total Cases")
 p2
 ```
 
-```{r}
+```{r, fig.height=6}
 grid.arrange(p1,p2,nrow=2)
 ```
 
@@ -172,22 +171,40 @@ poverty_avg <- poverty_avg %>% arrange(desc(ex_pov_avg))
 ```
 
 
-```{r}
-ggplot(popu_avg_1,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="red")+theme(axis.text.x=element_text(angle=45, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >500 people/km\u00B2")
+```{r, fig.height=10, fig.width=18}
+popu_p1 <- ggplot(popu_avg_1,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="red")+theme(axis.text.x=element_text(angle=45, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >500 people/km\u00B2")
 
-ggplot(popu_avg_2,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="orange")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >200 & <= 500 people/km\u00B2")
+popu_p2 <- ggplot(popu_avg_2,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="orange")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >200 & <= 500 people/km\u00B2")
 
-ggplot(popu_avg_3,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="gold")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >100 & <= 200 people/km\u00B2")
+popu_p3 <- ggplot(popu_avg_3,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="gold")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >100 & <= 200 people/km\u00B2")
 
-ggplot(popu_avg_4,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="darkgreen")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >50 & <= 100 people/km\u00B2")
+popu_p4 <- ggplot(popu_avg_4,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="darkgreen")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >50 & <= 100 people/km\u00B2")
 
-ggplot(popu_avg_5,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="darkcyan")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >20 & <= 50 people/km\u00B2")
+popu_p5 <- ggplot(popu_avg_5,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="darkcyan")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >20 & <= 50 people/km\u00B2")
 
-ggplot(popu_avg_6,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="blue")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >0 & <= 20 people/km\u00B2")
+popu_p6 <- ggplot(popu_avg_6,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="blue")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >0 & <= 20 people/km\u00B2")
+
+grid.arrange(popu_p1,popu_p2,popu_p3,popu_p4,popu_p5,popu_p6,nrow=3)
 ```
 
 ```{r}
-pr <- origin %>% group_by(location) %>% select(date, positive_rate, extreme_poverty, people_vaccinated, people_fully_vaccinated, population)
+popu_avg_1 <- popu_avg_1 %>% mutate(pstatus="1")
+popu_avg_2 <- popu_avg_2 %>% mutate(pstatus="2")
+popu_avg_3 <- popu_avg_3 %>% mutate(pstatus="3")
+popu_avg_4 <- popu_avg_4 %>% mutate(pstatus="4")
+popu_avg_5 <- popu_avg_5 %>% mutate(pstatus="5")
+popu_avg_6 <- popu_avg_6 %>% mutate(pstatus="6")
+```
+
+```{r}
+popu_avg_rejoin <- list(popu_avg_1,popu_avg_2,popu_avg_3,popu_avg_4,popu_avg_5,popu_avg_6)
+popu_avg_rejoin <- popu_avg_rejoin %>% reduce(full_join, by=NULL)
+```
+
+
+
+```{r}
+pr <- origin %>% group_by(location) %>% select(date, positive_rate, extreme_poverty, people_vaccinated, people_fully_vaccinated, population, population_density)
 
 origin_na_replace <- replace(origin,is.na(origin),0)
 
@@ -227,12 +244,16 @@ deduped_join_data <- deduped_join_data %>% rename(name_long = location)
 world_modifies_join = merge(x=world_modifies,y=deduped_join_data,by="name_long",all.x=TRUE)
 ```
 
-```{r}
+```{r, fig.height=6, fig.width=10}
 ggplot(data = world_modifies_join) +
   geom_sf(aes(fill=status)) +
   theme_bw()+scale_fill_discrete(name='Extreme Poverty\nStatus (% of population)',
                                  breaks=c("1", "2", "3", "4", "5", "6", "7", "8"),
                                  labels=c(">=0% & <=1%", ">1% & <=3%", ">3% & <=5%", ">5% & <=10%", ">10% & <=15%", ">15% & <=20%", ">20% & <=30%", ">30%"))+ggtitle("World Extreme Poverty Status (Filtered Data)")
+```
+
+```{r}
+pr_vaccinated_filter_valid = merge(x=pr_vaccinated_filter_valid,y=popu_avg_rejoin,by="location",all.x=TRUE)
 ```
 
 ```{r}
@@ -290,11 +311,33 @@ random_list <- random_list %>% reduce(full_join, by=NULL)
 ```
 
 
-```{r}
+```{r, fig.height=6,  fig.width=10}
 random_list$date <- ymd(random_list$date)
 
-ggplot(random_list)+geom_smooth(aes(x=date,y=vaccinated_rate,colour=status),size=1,level=.99)+scale_y_continuous(breaks = pretty_breaks())+geom_vline(xintercept = as.Date("2022-04-15"),linetype = "dashed", colour ="red",size=1)+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+scale_color_discrete(name='Extreme Poverty\nStatus (% of population)',
+vac_plot <- ggplot(random_list)+geom_smooth(aes(x=date,y=vaccinated_rate,colour=status),size=1,level=.99)+scale_y_continuous(breaks = pretty_breaks())+geom_vline(xintercept = as.Date("2022-04-15"),linetype = "dashed", colour ="red",size=1)+geom_hline(yintercept = 0,linetype = 4, colour ="red",size=.8)+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+scale_color_discrete(name='Extreme Poverty\nStatus (% of population)',
                                  breaks=c("1", "2", "3", "4", "5", "6", "7", "8"),
-                                 labels=c(">=0% & <=1%", ">1% & <=3%", ">3% & <=5%", ">5% & <=10%", ">10% & <=15%", ">15% & <=20%", ">20% & <=30%", ">30%"))+ylab("vaccinated rate (at least one dose)")
+                                 labels=c(">=0% & <=1%", ">1% & <=3%", ">3% & <=5%", ">5% & <=10%", ">10% & <=15%", ">15% & <=20%", ">20% & <=30%", ">30%"))+ylab("vaccinated rate (at least one dose)")+ggtitle("Vaccinated Rate Time Series grouped by Extreme Poverty Status")
+vac_plot
+```
+
+```{r}
+random_list %>% group_by(status) %>% summarise(mean(population_density))
+```
+
+```{r, fig.height=6,  fig.width=10}
+ggplot(random_list)+geom_smooth(aes(x=date,y=vaccinated_rate,colour=pstatus),size=1,level=.99)+scale_y_continuous(breaks = pretty_breaks())+geom_vline(xintercept = as.Date("2022-04-15"),linetype = "dashed", colour ="red",size=1)+geom_hline(yintercept = 0,linetype = 4, colour ="red",size=.8)+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+scale_color_discrete(name='Population Density (people/km\u00B2)',
+                                 breaks=c("1", "2", "3", "4", "5", "6"),
+                                 labels=c(">500", ">200 & <=500", ">100 & <=200", ">50 & <=100", ">20% & <=50%", ">0 & <=20"))+ylab("vaccinated rate (at least one dose)")+ggtitle("Vaccinated Rate Time Series grouped by Population Density")
+```
+
+```{r}
+random_pstatus <- distinct(random_list,location,pstatus)
+random_pstatus
+```
+
+```{r eval=FALSE, include=FALSE}
+knitr::purl("Assessment.Rmd")
+
+list.functions.in.file("Assessment.R")
 ```
 

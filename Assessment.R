@@ -1,0 +1,329 @@
+## ----setup, include=FALSE-----------------------------------------------------------------
+knitr::opts_chunk$set(echo = TRUE)
+
+
+## ---- include=FALSE-----------------------------------------------------------------------
+#install.packages("expss")
+#install.packages("formattable")
+#install.packages("rnaturalearth")
+#install.packages("rnaturalearthdata")
+#install.packages("NCmisc")
+library(expss)
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+library(tidyverse)
+library(lubridate)
+library(scales)
+library(formattable)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(NCmisc)
+
+
+## -----------------------------------------------------------------------------------------
+#unzip("owid-covid-data.zip")
+origin <- read.csv("owid-covid-data.csv")
+head(origin)
+
+
+## ---- warning=FALSE-----------------------------------------------------------------------
+variables <- colnames(origin)
+head(variables)
+labels <- data.frame(matrix(ncol = 1, nrow = 67))
+rownames(labels) <- variables
+colnames(labels) <- c("definition")
+
+
+## -----------------------------------------------------------------------------------------
+labels <- labels %>% mutate(definition=c("ISO 3166-1 alpha-3 – three-letter country codes. Note that OWID-defined regions (e.g. continents like 'Europe') contain prefix 'OWID_'.",
+                                        "Continent of the geographical location",
+                                        "Geographical location",
+                                        "Date of observation",
+                                        "Total confirmed cases of COVID-19",
+                                        "New confirmed cases of COVID-19",
+                                        "New confirmed cases of COVID-19 (7-day smoothed)",
+                                        "Total deaths attributed to COVID-19",
+                                        "New deaths attributed to COVID-19",
+                                        "New deaths attributed to COVID-19 (7-day smoothed)",
+                                        "Total confirmed cases of COVID-19 per 1,000,000 people",
+                                        "New confirmed cases of COVID-19 per 1,000,000 people",
+                                        "New confirmed cases of COVID-19 (7-day smoothed) per 1,000,000 people",
+                                        "Total deaths attributed to COVID-19 per 1,000,000 people",
+                                        "New deaths attributed to COVID-19 per 1,000,000 people",
+                                        "New deaths attributed to COVID-19 (7-day smoothed) per 1,000,000 people",
+                                        "Real-time estimate of the effective reproduction rate (R) of COVID-19",
+                                        "Number of COVID-19 patients in intensive care units (ICUs) on a given day",
+                                        "Number of COVID-19 patients in intensive care units (ICUs) on a given day per 1,000,000 people",
+                                        "Number of COVID-19 patients in hospital on a given day",
+                                        "Number of COVID-19 patients in hospital on a given day per 1,000,000 people",
+                                        "Number of COVID-19 patients newly admitted to intensive care units (ICUs) in a given week",
+                                        "Number of COVID-19 patients newly admitted to intensive care units (ICUs) in a given week per 1,000,000 people",
+                                        "Number of COVID-19 patients newly admitted to hospitals in a given week",
+                                        "Number of COVID-19 patients newly admitted to hospitals in a given week per 1,000,000 people",
+                                        "Total tests for COVID-19",
+                                        "New tests for COVID-19 (only calculated for consecutive days)",
+                                        "Total tests for COVID-19 per 1,000 people",
+                                        "New tests for COVID-19 per 1,000 people",
+                                        "New tests for COVID-19 (7-day smoothed)",
+                                        "New tests for COVID-19 (7-day smoothed) per 1,000 people",                                        
+                                        "The share of COVID-19 tests that are positive, given as a rolling 7-day average",
+                                        "Tests conducted per new confirmed case of COVID-19, given as a rolling 7-day average",
+                                        "Units used by the location to report its testing data. A country file can't contain mixed units. All metrics concerning testing data use the specified test unit. Valid units are 'people tested' (number of people tested), 'tests performed' (number of tests performed. a single person can be tested more than once in a given day) and 'samples tested' (number of samples tested. In some cases, more than one sample may be required to perform a given test.)",
+                                        "Total number of COVID-19 vaccination doses administered",
+                                        "Total number of people who received at least one vaccine dose",
+                                        "Total number of people who received all doses prescribed by the initial vaccination protocol",
+                                        "Total number of COVID-19 vaccination booster doses administered",
+                                        "New COVID-19 vaccination doses administered",
+                                        "New COVID-19 vaccination doses administered (7-day smoothed)",
+                                        "Total number of COVID-19 vaccination doses administered per 100 people in the total population",
+                                        "Total number of people who received at least one vaccine dose per 100 people in the total population",
+                                        "Total number of people who received all doses prescribed by the initial vaccination protocol per 100 people in the total population",
+                                        "Total number of COVID-19 vaccination booster doses administered per 100 people in the total population",
+                                        "New COVID-19 vaccination doses administered (7-day smoothed) per 1,000,000 people in the total population",
+                                        "Daily number of people receiving their first vaccine dose (7-day smoothed)",
+                                        "Daily number of people receiving their first vaccine dose (7-day smoothed) per 100 people in the total population",
+                                        "Government Response Stringency Index: composite measure based on 9 response indicators including school closures, workplace closures, and travel bans, rescaled to a value from 0 to 100 (100 = strictest response)",
+                                        "Population (latest available values)",
+                                        "Number of people divided by land area, measured in square kilometers, most recent year available",
+                                        "Median age of the population, UN projection for 2020",
+                                        "Share of the population that is 65 years and older, most recent year available",
+                                        "Share of the population that is 70 years and older in 2015",
+                                        "Gross domestic product at purchasing power parity (constant 2011 international dollars), most recent year available",
+                                        "Share of the population living in extreme poverty, most recent year available since 2010",
+                                        "Death rate from cardiovascular disease in 2017 (annual number of deaths per 100,000 people)",
+                                        "Diabetes prevalence (% of population aged 20 to 79) in 2017",
+                                        "Share of women who smoke, most recent year available",
+                                        "Share of men who smoke, most recent year available",
+                                        "Share of the population with basic handwashing facilities on premises, most recent year available",
+                                        "Hospital beds per 1,000 people, most recent year available since 2010",
+                                        "Life expectancy at birth in 2019",
+                                        "A composite index measuring average achievement in three basic dimensions of human development—a long and healthy life, knowledge and a decent standard of living. Values for 2019",
+                                        "Cumulative difference between the reported number of deaths since 1 January 2020 and the projected number of deaths for the same period based on previous years. For more information",
+                                        "Percentage difference between the cumulative number of deaths since 1 January 2020 and the cumulative projected deaths for the same period based on previous years. For more information",
+                                        "Percentage difference between the reported number of weekly or monthly deaths in 2020–2021 and the projected number of deaths for the same period based on previous years. For more information",
+                                        "Cumulative difference between the reported number of deaths since 1 January 2020 and the projected number of deaths for the same period based on previous years, per million people"))
+
+
+## ---- include=FALSE-----------------------------------------------------------------------
+png("test.png", height=22*nrow(labels), width = 2800*ncol(labels))
+p<-tableGrob(labels)
+grid.arrange(p)
+dev.off()
+
+
+
+## -----------------------------------------------------------------------------------------
+World_data <- origin %>% filter(location=="World")
+World_data
+
+
+## -----------------------------------------------------------------------------------------
+World_data$date <- ymd(World_data$date)
+World_data
+
+## -----------------------------------------------------------------------------------------
+World_data_2 <- World_data %>% mutate(year=year(date))
+
+
+## -----------------------------------------------------------------------------------------
+p1 <- ggplot(World_data_2)+geom_line(aes(x=date,y=total_deaths),colour="red")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+facet_wrap(~year,scales="free_x")+ylab("Total Deaths")
+p1
+
+
+## -----------------------------------------------------------------------------------------
+p2 <- ggplot(World_data_2)+geom_line(aes(x=date,y=total_cases),colour="blue")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+facet_wrap(~year,scales="free_x")+ylab("Total Cases")
+p2
+
+
+## ---- fig.height=6------------------------------------------------------------------------
+grid.arrange(p1,p2,nrow=2)
+
+
+## -----------------------------------------------------------------------------------------
+popu_avg <- origin %>% group_by(location) %>% summarize(avg = unique(population_density, na.rm=TRUE))
+popu_avg <- popu_avg %>% arrange(desc(popu_avg$avg))
+popu_avg <- na.omit(popu_avg)
+popu_avg_1 <- filter(popu_avg,avg>500)
+popu_avg_2 <- filter(popu_avg,avg>200&avg<=500)
+popu_avg_3 <- filter(popu_avg,avg>100&avg<=200)
+popu_avg_4 <- filter(popu_avg,avg>50&avg<=100)
+popu_avg_5 <- filter(popu_avg,avg>20&avg<=50)
+popu_avg_6 <- filter(popu_avg,avg>0&avg<=20)
+popu_avg_1
+popu_avg_2
+popu_avg_3
+popu_avg_4
+popu_avg_5
+popu_avg_6
+
+
+## -----------------------------------------------------------------------------------------
+poverty_avg <- origin %>% group_by(location) %>% summarize(ex_pov_avg = median(extreme_poverty, na.rm=TRUE))
+poverty_avg <- poverty_avg %>% filter(ex_pov_avg > 0)
+poverty_avg <- poverty_avg %>% arrange(desc(ex_pov_avg))
+
+
+## ---- fig.height=10-----------------------------------------------------------------------
+popu_p1 <- ggplot(popu_avg_1,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="red")+theme(axis.text.x=element_text(angle=45, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >500 people/km\u00B2")
+
+popu_p2 <- ggplot(popu_avg_2,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="orange")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >200 & <= 500 people/km\u00B2")
+
+popu_p3 <- ggplot(popu_avg_3,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="gold")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >100 & <= 200 people/km\u00B2")
+
+popu_p4 <- ggplot(popu_avg_4,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="darkgreen")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >50 & <= 100 people/km\u00B2")
+
+popu_p5 <- ggplot(popu_avg_5,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="darkcyan")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >20 & <= 50 people/km\u00B2")
+
+popu_p6 <- ggplot(popu_avg_6,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="blue")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >0 & <= 20 people/km\u00B2")
+
+grid.arrange(popu_p1,popu_p2,popu_p3,popu_p4,popu_p5,popu_p6,nrow=3)
+
+
+## -----------------------------------------------------------------------------------------
+popu_avg_1 <- popu_avg_1 %>% mutate(pstatus="1")
+popu_avg_2 <- popu_avg_2 %>% mutate(pstatus="2")
+popu_avg_3 <- popu_avg_3 %>% mutate(pstatus="3")
+popu_avg_4 <- popu_avg_4 %>% mutate(pstatus="4")
+popu_avg_5 <- popu_avg_5 %>% mutate(pstatus="5")
+popu_avg_6 <- popu_avg_6 %>% mutate(pstatus="6")
+
+
+## -----------------------------------------------------------------------------------------
+popu_avg_rejoin <- list(popu_avg_1,popu_avg_2,popu_avg_3,popu_avg_4,popu_avg_5,popu_avg_6)
+popu_avg_rejoin <- popu_avg_rejoin %>% reduce(full_join, by=NULL)
+
+
+## -----------------------------------------------------------------------------------------
+pr <- origin %>% group_by(location) %>% select(date, positive_rate, extreme_poverty, people_vaccinated, people_fully_vaccinated, population, population_density)
+
+origin_na_replace <- replace(origin,is.na(origin),0)
+
+pr <- mutate(pr,  vaccinated_rate = people_vaccinated/population, fully_vaccinated_rate = people_fully_vaccinated/population)
+
+
+
+## -----------------------------------------------------------------------------------------
+pr_vaccinated_filter <- pr %>% filter(vaccinated_rate>0)
+
+
+## -----------------------------------------------------------------------------------------
+pr_vaccinated_filter_valid <- filter(pr_vaccinated_filter, location %in% poverty_avg$location)
+
+
+## -----------------------------------------------------------------------------------------
+pr_vaccinated_filter_valid <- pr_vaccinated_filter_valid %>% mutate(status=case_when(extreme_poverty>30  ~ '8',
+                                                       extreme_poverty<=30 & extreme_poverty >20  ~ '7',
+                                                       extreme_poverty<=20 & extreme_poverty >15  ~ '6',
+                                                       extreme_poverty<=15 & extreme_poverty >10  ~ '5',
+                                                       extreme_poverty<=10 & extreme_poverty >5  ~ '4',
+                                                       extreme_poverty<=5 & extreme_poverty >3  ~ '3',
+                                                       extreme_poverty<=3 & extreme_poverty >1  ~ '2',
+                                                       extreme_poverty<=1 & extreme_poverty >=0  ~ '1'))
+
+
+## -----------------------------------------------------------------------------------------
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+world_modifies <- world %>% mutate(selection = ifelse(admin %in% pr_vaccinated_filter_valid$location, 1, NA))
+
+
+## -----------------------------------------------------------------------------------------
+join_data <- pr_vaccinated_filter_valid %>% select(location, status)
+deduped_join_data <- unique(join_data)
+deduped_join_data <- deduped_join_data %>% rename(name_long = location)
+world_modifies_join = merge(x=world_modifies,y=deduped_join_data,by="name_long",all.x=TRUE)
+
+
+## ---- fig.height=6------------------------------------------------------------------------
+ggplot(data = world_modifies_join) +
+  geom_sf(aes(fill=status)) +
+  theme_bw()+scale_fill_discrete(name='Extreme Poverty\nStatus (% of population)',
+                                 breaks=c("1", "2", "3", "4", "5", "6", "7", "8"),
+                                 labels=c(">=0% & <=1%", ">1% & <=3%", ">3% & <=5%", ">5% & <=10%", ">10% & <=15%", ">15% & <=20%", ">20% & <=30%", ">30%"))+ggtitle("World Extreme Poverty Status (Filtered Data)")
+
+
+## -----------------------------------------------------------------------------------------
+pr_vaccinated_filter_valid = merge(x=pr_vaccinated_filter_valid,y=popu_avg_rejoin,by="location",all.x=TRUE)
+
+
+## -----------------------------------------------------------------------------------------
+pr_vaccinated_filter_valid_1 <- pr_vaccinated_filter_valid %>% filter(status == 1) 
+
+random_1 <- pr_vaccinated_filter_valid_1[pr_vaccinated_filter_valid_1$location %in% sample(unique(pr_vaccinated_filter_valid_1$location), 3),]
+
+
+## -----------------------------------------------------------------------------------------
+pr_vaccinated_filter_valid_2 <- pr_vaccinated_filter_valid %>% filter(status == 2) 
+
+random_2 <- pr_vaccinated_filter_valid_2[pr_vaccinated_filter_valid_2$location %in% sample(unique(pr_vaccinated_filter_valid_2$location), 3),]
+
+
+## -----------------------------------------------------------------------------------------
+pr_vaccinated_filter_valid_3 <- pr_vaccinated_filter_valid %>% filter(status == 3) 
+
+random_3 <- pr_vaccinated_filter_valid_3[pr_vaccinated_filter_valid_3$location %in% sample(unique(pr_vaccinated_filter_valid_3$location), 3),]
+
+
+## -----------------------------------------------------------------------------------------
+pr_vaccinated_filter_valid_4 <- pr_vaccinated_filter_valid %>% filter(status == 4) 
+
+random_4 <- pr_vaccinated_filter_valid_4[pr_vaccinated_filter_valid_4$location %in% sample(unique(pr_vaccinated_filter_valid_4$location), 3),]
+
+
+## -----------------------------------------------------------------------------------------
+pr_vaccinated_filter_valid_5 <- pr_vaccinated_filter_valid %>% filter(status == 5) 
+
+random_5 <- pr_vaccinated_filter_valid_5[pr_vaccinated_filter_valid_5$location %in% sample(unique(pr_vaccinated_filter_valid_5$location), 3),]
+
+
+## -----------------------------------------------------------------------------------------
+pr_vaccinated_filter_valid_6 <- pr_vaccinated_filter_valid %>% filter(status == 6) 
+
+random_6 <- pr_vaccinated_filter_valid_6[pr_vaccinated_filter_valid_6$location %in% sample(unique(pr_vaccinated_filter_valid_6$location), 3),]
+
+
+## -----------------------------------------------------------------------------------------
+pr_vaccinated_filter_valid_7 <- pr_vaccinated_filter_valid %>% filter(status == 7) 
+
+random_7 <- pr_vaccinated_filter_valid_7[pr_vaccinated_filter_valid_7$location %in% sample(unique(pr_vaccinated_filter_valid_7$location), 3),]
+
+
+## -----------------------------------------------------------------------------------------
+pr_vaccinated_filter_valid_8 <- pr_vaccinated_filter_valid %>% filter(status == 8) 
+
+random_8 <- pr_vaccinated_filter_valid_8[pr_vaccinated_filter_valid_8$location %in% sample(unique(pr_vaccinated_filter_valid_8$location), 3),]
+
+
+## -----------------------------------------------------------------------------------------
+random_list <- list(random_1,random_2,random_3,random_4,random_5,random_6,random_7,random_8)
+random_list <- random_list %>% reduce(full_join, by=NULL)
+
+
+## ---- fig.height=6------------------------------------------------------------------------
+random_list$date <- ymd(random_list$date)
+
+vac_plot <- ggplot(random_list)+geom_smooth(aes(x=date,y=vaccinated_rate,colour=status),size=1,level=.99)+scale_y_continuous(breaks = pretty_breaks())+geom_vline(xintercept = as.Date("2022-04-15"),linetype = "dashed", colour ="red",size=1)+geom_hline(yintercept = 0,linetype = 4, colour ="red",size=.8)+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+scale_color_discrete(name='Extreme Poverty\nStatus (% of population)',
+                                 breaks=c("1", "2", "3", "4", "5", "6", "7", "8"),
+                                 labels=c(">=0% & <=1%", ">1% & <=3%", ">3% & <=5%", ">5% & <=10%", ">10% & <=15%", ">15% & <=20%", ">20% & <=30%", ">30%"))+ylab("vaccinated rate (at least one dose)")+ggtitle("Vaccinated Rate Time Series grouped by Extreme Poverty Status")
+vac_plot
+
+
+## -----------------------------------------------------------------------------------------
+random_list %>% group_by(status) %>% summarise(mean(population_density))
+
+
+## ---- fig.height=6------------------------------------------------------------------------
+ggplot(random_list)+geom_smooth(aes(x=date,y=vaccinated_rate,colour=pstatus),size=1,level=.99)+scale_y_continuous(breaks = pretty_breaks())+geom_vline(xintercept = as.Date("2022-04-15"),linetype = "dashed", colour ="red",size=1)+geom_hline(yintercept = 0,linetype = 4, colour ="red",size=.8)+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+scale_color_discrete(name='Population Density (people/km\u00B2)',
+                                 breaks=c("1", "2", "3", "4", "5", "6"),
+                                 labels=c(">500", ">200 & <=500", ">100 & <=200", ">50 & <=100", ">20% & <=50%", ">0 & <=20"))+ylab("vaccinated rate (at least one dose)")+ggtitle("Vaccinated Rate Time Series grouped by Population Density")
+
+
+## -----------------------------------------------------------------------------------------
+random_pstatus <- distinct(random_list,location,pstatus)
+random_pstatus
+
+
+## -----------------------------------------------------------------------------------------
+list.functions.in.file()
+
