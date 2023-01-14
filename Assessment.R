@@ -8,7 +8,6 @@ knitr::opts_chunk$set(echo = TRUE)
 #install.packages("rnaturalearth")
 #install.packages("rnaturalearthdata")
 #install.packages("NCmisc")
-library(expss)
 library(dplyr)
 library(ggplot2)
 library(gridExtra)
@@ -115,24 +114,22 @@ dev.off()
 
 ## -----------------------------------------------------------------------------------------
 World_data <- origin %>% filter(location=="World")
-World_data
 
 
 ## -----------------------------------------------------------------------------------------
 World_data$date <- ymd(World_data$date)
-World_data
 
 ## -----------------------------------------------------------------------------------------
 World_data_2 <- World_data %>% mutate(year=year(date))
 
 
 ## -----------------------------------------------------------------------------------------
-p1 <- ggplot(World_data_2)+geom_line(aes(x=date,y=total_deaths),colour="red")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+facet_wrap(~year,scales="free_x")+ylab("Total Deaths")
+p1 <- ggplot(World_data_2)+geom_smooth(aes(x=date,y=new_deaths),colour="red")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+facet_wrap(~year,scales="free_x")+ylab("New Deaths")
 p1
 
 
 ## -----------------------------------------------------------------------------------------
-p2 <- ggplot(World_data_2)+geom_line(aes(x=date,y=total_cases),colour="blue")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+facet_wrap(~year,scales="free_x")+ylab("Total Cases")
+p2 <- ggplot(World_data_2)+geom_smooth(aes(x=date,y=new_cases),colour="blue")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+facet_wrap(~year,scales="free_x")+ylab("New Cases")
 p2
 
 
@@ -164,7 +161,7 @@ poverty_avg <- poverty_avg %>% filter(ex_pov_avg > 0)
 poverty_avg <- poverty_avg %>% arrange(desc(ex_pov_avg))
 
 
-## ---- fig.height=10-----------------------------------------------------------------------
+## ---- fig.height=10, fig.width=18---------------------------------------------------------
 popu_p1 <- ggplot(popu_avg_1,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="red")+theme(axis.text.x=element_text(angle=45, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >500 people/km\u00B2")
 
 popu_p2 <- ggplot(popu_avg_2,aes(x=reorder(location, -avg),y=avg))+geom_bar(stat = "identity",fill="orange")+theme(axis.text.x=element_text(angle=60, hjust=1))+ylab("Average Population Density (people/km\u00B2)")+xlab("Country")+ggtitle("Population Density >200 & <= 500 people/km\u00B2")
@@ -235,7 +232,7 @@ deduped_join_data <- deduped_join_data %>% rename(name_long = location)
 world_modifies_join = merge(x=world_modifies,y=deduped_join_data,by="name_long",all.x=TRUE)
 
 
-## ---- fig.height=6------------------------------------------------------------------------
+## ---- fig.height=6, fig.width=10----------------------------------------------------------
 ggplot(data = world_modifies_join) +
   geom_sf(aes(fill=status)) +
   theme_bw()+scale_fill_discrete(name='Extreme Poverty\nStatus (% of population)',
@@ -300,7 +297,7 @@ random_list <- list(random_1,random_2,random_3,random_4,random_5,random_6,random
 random_list <- random_list %>% reduce(full_join, by=NULL)
 
 
-## ---- fig.height=6------------------------------------------------------------------------
+## ---- fig.height=6,  fig.width=10---------------------------------------------------------
 random_list$date <- ymd(random_list$date)
 
 vac_plot <- ggplot(random_list)+geom_smooth(aes(x=date,y=vaccinated_rate,colour=status),size=1,level=.99)+scale_y_continuous(breaks = pretty_breaks())+geom_vline(xintercept = as.Date("2022-04-15"),linetype = "dashed", colour ="red",size=1)+geom_hline(yintercept = 0,linetype = 4, colour ="red",size=.8)+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+scale_color_discrete(name='Extreme Poverty\nStatus (% of population)',
@@ -313,7 +310,7 @@ vac_plot
 random_list %>% group_by(status) %>% summarise(mean(population_density))
 
 
-## ---- fig.height=6------------------------------------------------------------------------
+## ---- fig.height=6,  fig.width=10---------------------------------------------------------
 ggplot(random_list)+geom_smooth(aes(x=date,y=vaccinated_rate,colour=pstatus),size=1,level=.99)+scale_y_continuous(breaks = pretty_breaks())+geom_vline(xintercept = as.Date("2022-04-15"),linetype = "dashed", colour ="red",size=1)+geom_hline(yintercept = 0,linetype = 4, colour ="red",size=.8)+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+scale_color_discrete(name='Population Density (people/km\u00B2)',
                                  breaks=c("1", "2", "3", "4", "5", "6"),
                                  labels=c(">500", ">200 & <=500", ">100 & <=200", ">50 & <=100", ">20% & <=50%", ">0 & <=20"))+ylab("vaccinated rate (at least one dose)")+ggtitle("Vaccinated Rate Time Series grouped by Population Density")
@@ -324,6 +321,8 @@ random_pstatus <- distinct(random_list,location,pstatus)
 random_pstatus
 
 
-## -----------------------------------------------------------------------------------------
-list.functions.in.file()
+## ----eval=FALSE, include=FALSE------------------------------------------------------------
+## knitr::purl("Assessment.Rmd")
+## 
+## list.functions.in.file("Assessment.R")
 

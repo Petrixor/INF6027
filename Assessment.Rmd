@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #install.packages("rnaturalearth")
 #install.packages("rnaturalearthdata")
 #install.packages("NCmisc")
+#install.packages("ggpubr")
 library(dplyr)
 library(ggplot2)
 library(gridExtra)
@@ -25,6 +26,7 @@ library(formattable)
 library(rnaturalearth)
 library(rnaturalearthdata)
 library(NCmisc)
+library(ggpubr)
 ```
 
 ```{r}
@@ -75,7 +77,7 @@ labels <- labels %>% mutate(definition=c("ISO 3166-1 alpha-3 – three-letter co
                                         "New tests for COVID-19 (7-day smoothed) per 1,000 people",                                        
                                         "The share of COVID-19 tests that are positive, given as a rolling 7-day average",
                                         "Tests conducted per new confirmed case of COVID-19, given as a rolling 7-day average",
-                                        "Units used by the location to report its testing data. A country file can't contain mixed units. All metrics concerning testing data use the specified test unit. Valid units are 'people tested' (number of people tested), 'tests performed' (number of tests performed. a single person can be tested more than once in a given day) and 'samples tested' (number of samples tested. In some cases, more than one sample may be required to perform a given test.)",
+                                        "Units used by the location to report its testing data. A country file can't contain mixed units. All metrics concerning testing data use the specified test unit. Valid units are 'people tested' (number of people tested), 'tests performed' (number of tests performed.\na single person can be tested more than once in a given day) and 'samples tested' (number of samples tested. In some cases, more than one sample may be required to perform a given test.)",
                                         "Total number of COVID-19 vaccination doses administered",
                                         "Total number of people who received at least one vaccine dose",
                                         "Total number of people who received all doses prescribed by the initial vaccination protocol",
@@ -112,12 +114,20 @@ labels <- labels %>% mutate(definition=c("ISO 3166-1 alpha-3 – three-letter co
 ```
 
 ```{r, include=FALSE}
-png("test.png", height=22*nrow(labels), width = 2800*ncol(labels))
+png("test.png", height=22*nrow(labels), width = 1700*ncol(labels))
 p<-tableGrob(labels)
 grid.arrange(p)
 dev.off()
 
 ```
+
+```{r, fig.height=6, fig.width=10}
+Israel_data <- origin %>% filter(location=="Israel")
+Israel_data$date <- ymd(Israel_data$date)
+Israel_data_2 <- Israel_data %>% mutate(year=year(date)) %>% filter(year=="2021"|year=="2020")
+ggplot(Israel_data_2)+geom_smooth(aes(x=date,y=new_cases),colour="darkblue")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+ylab("New Cases")+geom_vline(xintercept = as.Date("2021-03-01"),linetype = "dashed", colour ="red",size=1)#+facet_wrap(~year,scales="free_x")
+```
+
 
 
 ```{r}
@@ -133,12 +143,12 @@ World_data_2 <- World_data %>% mutate(year=year(date))
 
 
 ```{r}
-p1 <- ggplot(World_data_2)+geom_line(aes(x=date,y=total_deaths),colour="red")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+facet_wrap(~year,scales="free_x")+ylab("Total Deaths")
+p1 <- ggplot(World_data_2)+geom_smooth(aes(x=date,y=new_deaths),colour="red")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+facet_wrap(~year,scales="free_x")+ylab("New Deaths")
 p1
 ```
 
 ```{r}
-p2 <- ggplot(World_data_2)+geom_line(aes(x=date,y=total_cases),colour="blue")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+facet_wrap(~year,scales="free_x")+ylab("Total Cases")
+p2 <- ggplot(World_data_2)+geom_smooth(aes(x=date,y=new_cases),colour="blue")+scale_y_continuous(breaks = pretty_breaks())+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+facet_wrap(~year,scales="free_x")+ylab("New Cases")
 p2
 ```
 
@@ -314,9 +324,9 @@ random_list <- random_list %>% reduce(full_join, by=NULL)
 ```{r, fig.height=6,  fig.width=10}
 random_list$date <- ymd(random_list$date)
 
-vac_plot <- ggplot(random_list)+geom_smooth(aes(x=date,y=vaccinated_rate,colour=status),size=1,level=.99)+scale_y_continuous(breaks = pretty_breaks())+geom_vline(xintercept = as.Date("2022-04-15"),linetype = "dashed", colour ="red",size=1)+geom_hline(yintercept = 0,linetype = 4, colour ="red",size=.8)+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+scale_color_discrete(name='Extreme Poverty\nStatus (% of population)',
+vac_plot <- ggplot(random_list)+geom_smooth(aes(x=date,y=vaccinated_rate,colour=status),size=1,level=.99,method="loess",formula = y ~ x)+scale_y_continuous(breaks = pretty_breaks())+geom_vline(xintercept = as.Date("2022-04-15"),linetype = "dashed", colour ="red",size=1)+geom_hline(yintercept = 0,linetype = 4, colour ="red",size=.8)+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+scale_color_discrete(name='Extreme Poverty\nStatus (% of population)',
                                  breaks=c("1", "2", "3", "4", "5", "6", "7", "8"),
-                                 labels=c(">=0% & <=1%", ">1% & <=3%", ">3% & <=5%", ">5% & <=10%", ">10% & <=15%", ">15% & <=20%", ">20% & <=30%", ">30%"))+ylab("vaccinated rate (at least one dose)")+ggtitle("Vaccinated Rate Time Series grouped by Extreme Poverty Status")
+                                 labels=c(">=0% & <=1%", ">1% & <=3%", ">3% & <=5%", ">5% & <=10%", ">10% & <=15%", ">15% & <=20%", ">20% & <=30%", ">30%"))+ylab("vaccinated rate (at least one dose)")+ggtitle("Vaccinated Rate Time Series grouped by Extreme Poverty Status")+stat_cor(aes(x=date,y=vaccinated_rate,colour=status), method = "pearson")
 vac_plot
 ```
 
@@ -325,9 +335,9 @@ random_list %>% group_by(status) %>% summarise(mean(population_density))
 ```
 
 ```{r, fig.height=6,  fig.width=10}
-ggplot(random_list)+geom_smooth(aes(x=date,y=vaccinated_rate,colour=pstatus),size=1,level=.99)+scale_y_continuous(breaks = pretty_breaks())+geom_vline(xintercept = as.Date("2022-04-15"),linetype = "dashed", colour ="red",size=1)+geom_hline(yintercept = 0,linetype = 4, colour ="red",size=.8)+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+scale_color_discrete(name='Population Density (people/km\u00B2)',
+ggplot(random_list)+geom_smooth(aes(x=date,y=vaccinated_rate,colour=pstatus),size=1,level=.99,method="loess",formula = y ~ x)+scale_y_continuous(breaks = pretty_breaks())+geom_vline(xintercept = as.Date("2022-04-15"),linetype = "dashed", colour ="red",size=1)+geom_hline(yintercept = 0,linetype = 4, colour ="red",size=.8)+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+scale_color_discrete(name='Population Density (people/km\u00B2)',
                                  breaks=c("1", "2", "3", "4", "5", "6"),
-                                 labels=c(">500", ">200 & <=500", ">100 & <=200", ">50 & <=100", ">20% & <=50%", ">0 & <=20"))+ylab("vaccinated rate (at least one dose)")+ggtitle("Vaccinated Rate Time Series grouped by Population Density")
+                                 labels=c(">500", ">200 & <=500", ">100 & <=200", ">50 & <=100", ">20% & <=50%", ">0 & <=20"))+ylab("vaccinated rate (at least one dose)")+ggtitle("Vaccinated Rate Time Series grouped by Population Density")+stat_cor(aes(x=date,y=vaccinated_rate,colour=pstatus), method = "pearson")
 ```
 
 ```{r}
@@ -335,7 +345,7 @@ random_pstatus <- distinct(random_list,location,pstatus)
 random_pstatus
 ```
 
-```{r eval=FALSE, include=FALSE}
+```{r echo=FALSE}
 knitr::purl("Assessment.Rmd")
 
 list.functions.in.file("Assessment.R")
