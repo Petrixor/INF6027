@@ -263,6 +263,19 @@ ggplot(data = world_modifies_join) +
 ```
 
 ```{r}
+join_data_1 <- pr_vaccinated_filter_valid %>% select(location, pstatus)
+deduped_join_data_1 <- unique(join_data_1)
+deduped_join_data_1 <- deduped_join_data_1 %>% rename(name_long = location)
+world_modifies_join_1 = merge(x=world_modifies,y=deduped_join_data_1,by="name_long",all.x=TRUE)
+ggplot(data = world_modifies_join_1) +
+  geom_sf(aes(fill=pstatus)) +
+  theme_bw()+scale_fill_discrete(name='Extreme Poverty\nStatus (% of population)',
+                                 breaks=c("1", "2", "3", "4", "5", "6"),
+                                 labels=c(">500", ">200 & <=500", ">100 & <=200", ">50 & <=100", ">20% & <=50%", ">0 & <=20"))+ggtitle("World Population Density (Filtered Data)")
+```
+
+
+```{r}
 pr_vaccinated_filter_valid = merge(x=pr_vaccinated_filter_valid,y=popu_avg_rejoin,by="location",all.x=TRUE)
 ```
 
