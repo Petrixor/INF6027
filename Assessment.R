@@ -331,14 +331,47 @@ vac_plot
 random_list %>% group_by(status) %>% summarise(mean(population_density))
 
 
+## -----------------------------------------------------------
+pvalid_1 <- pr_vaccinated_filter_valid %>% filter(pstatus == 1) 
+
+prandom_1 <- pvalid_1[pvalid_1$location %in% sample(unique(pvalid_1$location), 3),]
+
+pvalid_2 <- pr_vaccinated_filter_valid %>% filter(pstatus == 2) 
+
+prandom_2 <- pvalid_2[pvalid_2$location %in% sample(unique(pvalid_2$location), 3),]
+
+pvalid_3 <- pr_vaccinated_filter_valid %>% filter(pstatus == 3) 
+
+prandom_3 <- pvalid_3[pvalid_3$location %in% sample(unique(pvalid_3$location), 3),]
+
+pvalid_4 <- pr_vaccinated_filter_valid %>% filter(pstatus == 4) 
+
+prandom_4 <- pvalid_4[pvalid_4$location %in% sample(unique(pvalid_4$location), 3),]
+
+pvalid_5 <- pr_vaccinated_filter_valid %>% filter(pstatus == 5) 
+
+prandom_5 <- pvalid_5[pvalid_5$location %in% sample(unique(pvalid_5$location), 3),]
+
+pvalid_6 <- pr_vaccinated_filter_valid %>% filter(pstatus == 6) 
+
+prandom_6 <- pvalid_6[pvalid_6$location %in% sample(unique(pvalid_6$location), 3),]
+
+
+## -----------------------------------------------------------
+prandom_list <- list(prandom_1,prandom_2,prandom_3,prandom_4,prandom_5,prandom_6)
+prandom_list <- prandom_list %>% reduce(full_join, by=NULL)
+
+
 ## ---- fig.height=6,  fig.width=10---------------------------
-ggplot(random_list)+geom_smooth(aes(x=date,y=vaccinated_rate,colour=pstatus),size=1,level=.99,method="loess",formula = y ~ x)+scale_y_continuous(breaks = pretty_breaks())+geom_vline(xintercept = as.Date("2022-04-15"),linetype = "dashed", colour ="red",size=1)+geom_hline(yintercept = 0,linetype = 4, colour ="red",size=.8)+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+scale_color_discrete(name='Population Density (people/km\u00B2)',
+prandom_list$date <- ymd(prandom_list$date)
+
+ggplot(prandom_list)+geom_smooth(aes(x=date,y=vaccinated_rate,colour=pstatus),size=1,level=.99,method="loess",formula = y ~ x)+scale_y_continuous(breaks = pretty_breaks())+geom_vline(xintercept = as.Date("2022-04-15"),linetype = "dashed", colour ="red",size=1)+geom_hline(yintercept = 0,linetype = 4, colour ="red",size=.8)+scale_x_date(labels = date_format("%y-%b"), date_breaks = "month")+theme(axis.text.x = element_text(angle = 65, vjust = .5, hjust = .45))+scale_color_discrete(name='Population Density (people/km\u00B2)',
                                  breaks=c("1", "2", "3", "4", "5", "6"),
                                  labels=c(">500", ">200 & <=500", ">100 & <=200", ">50 & <=100", ">20% & <=50%", ">0 & <=20"))+ylab("vaccinated rate (at least one dose)")+ggtitle("Vaccinated Rate Time Series grouped by Population Density")+stat_cor(aes(x=date,y=vaccinated_rate,colour=pstatus), method = "pearson")
 
 
 ## -----------------------------------------------------------
-random_pstatus <- distinct(random_list,location,pstatus)
+random_pstatus <- distinct(prandom_list,location,pstatus)
 random_pstatus
 
 
